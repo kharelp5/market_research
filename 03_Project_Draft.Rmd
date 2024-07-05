@@ -1,0 +1,913 @@
+---
+title: "Financial Markets Data Exploration"
+author: Pukar Kharel, Damon Ross & Ali Mandi Rupani 
+date: 12/10/2022
+output: 
+  html_document:
+    df_print: paged
+---
+
+
+## Introduction
+
+
+Daily one can always find television programs, newspaper articles, and neighborly conversations regarding the financial marketplace. Anytime shopping is done, paying bills, using the local bank, or frequenting a favorite restaurant, the financial marketplace is engaged. Often times when key events occur throughout the world, a variety of financial factors seem to be affected. The goal of this project is to perform exploratory analysis on a variety of key financial market indexes and discover any relationships potentially present over the past 10-15 years and identify key world events of possible influence.  
+
+
+## Packages Required
+
+
+```{r, warning=FALSE, message=FALSE}
+library(plotly)
+library(tidyverse)
+library(ggplot2)
+library(quantmod)
+```
+
+
+## Import Data & Preparation 
+
+
+The data used was obtained from Yahoo Finance. The data contained information regarding the four key US market indices: Dow Jones, Standard & S&P 500, Russell 2000, and NASDAQ. Additionally, index data was chosen regarding the federal interest rate (substitute ten-year treasury bond), Bitcoin (representative of cryptocurrency), crude oil, Dow transportation average, and a few international indices such as Japan's Nikkei and the London Stock Exchange. 
+
+Packages used to assist with the analysis of data in using R-Studio were the following:  library(plotly), library(tidyverse), library(ggplot2), library(quantmod) 
+The quantmod package was beneficial in assisting with data preparation by extracting data directly from Yahoo Finance.  An example of data extraction code is #df_one_Sp500 getSymbols(""^GSPC"",src='yahoo'') # S&P 500.  
+
+
+```{r, warning=FALSE, message=FALSE}
+# The variety of Markets 
+#df_one_Sp500
+getSymbols("^GSPC",src='yahoo') # S&P 500 
+#df_two_Dow30
+getSymbols("^DJI", src='yahoo') # Dow 30
+#df_three_Nasdaq
+getSymbols("^IXIC", src='yahoo') # Nasdaq
+#df_four_Russell
+getSymbols("^RUT", src='yahoo') # Russell 2000
+
+
+## Trial and Error ##
+#df_five
+getSymbols("^TNX", src='yahoo') # 10 yr Bond **** ((similar to Fed Fund Rate))
+
+#International Markets:
+
+#df6_six 
+getSymbols("^FTSE", src='yahoo') # Financial Times Stock Exchange UK 
+
+#df6_seven 
+getSymbols("^N225", src='yahoo') #Nikkei 225
+
+#df_eight
+getSymbols("BTC-USD", src='yahoo') #Bitcoin 
+
+#df_nine
+getSymbols("^VIX", src='yahoo') #Volatility Index
+
+# # The variety of Commodities
+
+#df_ten
+getSymbols("CL=F", src='yahoo') # Crude Oil
+
+# #df_eleven
+getSymbols("GC=F", src='yahoo') # Gold
+
+# #df_twelve
+getSymbols("SI=F", src='yahoo') # Silver
+
+# #df_thirteen
+getSymbols("^DJT", src='yahoo') # Dow Jones Transportation 
+
+
+# #The varity of Int. Rate & Currencies
+
+# #df14
+getSymbols("EURUSD=X", src='yahoo') # EUR/USD
+
+# #df15
+getSymbols("EUR=X", src='yahoo') # USD/EUR
+#
+
+```
+
+### Challenges 
+
+
+During the data preparation process a few challenges arose. There were some challenges trying to handle some missing data values and with trying to remove those observations. Additionally, the data extraction process using quantmod had an equal sign symbol translation error; however, that issue was resolved by replacing it with a period for the equal sign. Also, a desire to explore basic machine learning modeling with the data by using the library(tinymodels) came to a halt with the issues uploading to R-Studio. 
+
+
+## Exploratory Data Analysis and Visualization 
+
+
+### 10 Year Bond vs. Bitcoin 
+
+
+Cryptocurrency, a type of virtual currency, has seen more time in the media over the past few years being the newer hip form of monetary exchange. An interesting question is: What type of relationships, comparisons, and contrasts does crypto currency have with the federal interest rate, and how do world events influence the movement of cryptocurrency? To explore this question, the Bitcoin index data was chosen to represent the typical cryptocurrency. Also, to represent the federal interest rate, the 10-year treasury bond index was used. Graphs of Bitcoin and 10-year treasury bonds were created as functions of time. Spanning over both graphs, there seems to be a similar relationship with movement according to time. For example, in 2016, the 10-year bond graph had a significant spike downward along with Bitcoin (albeit the spike downward very close to zero). One must wonder if the crude oil price collapse in 2016 of West Texas Intermediate, which slowed down US production, had a significant influence on both indices trending down. Also, when comparing both graphs, a considerable spike upward occurred in late 2017-2018. In this period, cryptocurrencies soared in value for investors, and cannabis was legalized in Canada/cannabis companies begin trading on US stock exchanges, perhaps a strong driving for this graph movement. Lastly comparing both graphs, during the year 2020 major spike occurred downward and then large spike upward during 2021. Of note Covid-19 pandemic happened slowing the world's supply chain perhaps helping influence both graphs negatively. Considering comparing Bitcoin and the 10-year bond, it would seem that key world events influence these indices with very similar results. 
+
+
+```{r, warning=FALSE, message=FALSE}
+#7 ^TNX - 10 Year Bond  = basic example of candle charts
+df_seven_10_Yr <- data.frame(Date=index(`TNX`),coredata(`TNX`))
+df_seven_10_Yr <- tail(df_seven_10_Yr, 3997)
+
+#######################################################################
+
+#8 ^BTC-USD - Bitcoin  = basic example of candle charts
+df_eight_Bitcoin <- data.frame(Date=index(`BTC-USD`),coredata(`BTC-USD`))
+df_eight_Bitcoin <- tail(df_eight_Bitcoin, 3997)
+
+#######################################################################
+
+
+fig7_10_Yr <- df_seven_10_Yr %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~TNX.Open, close = ~TNX.Close,
+          high = ~TNX.High, low = ~TNX.Low)
+fig7_10_Yr <- fig7_10_Yr %>% layout(title = "10 Year Bond High Candlestick Chart")
+
+fig7_10_Yr
+
+#######################################################################
+
+fig8_Bitcoin <- df_eight_Bitcoin %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~BTC.USD.Open, close = ~BTC.USD.Close,
+          high = ~BTC.USD.High, low = ~BTC.USD.Low)
+fig8_Bitcoin <- fig8_Bitcoin %>% layout(title = "Bitcoin High Candlestick Chart")
+
+fig8_Bitcoin
+
+#######################################################################
+
+df_seven_10_Yr %>% 
+  arrange(desc(by=TNX.High)) %>%            # arrange descending so that we may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, TNX.High, TNX.Open, TNX.Close,) # Use select(columns) function to display only required name on (columns)
+
+#######################################################################
+
+
+df_eight_Bitcoin %>% 
+  arrange(desc(by=BTC.USD.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, BTC.USD.Volume, BTC.USD.Open, BTC.USD.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+
+
+### Vix vs. Dow Jones 
+
+What is VIX?
+VIX : VIX is a ticker symbol and the popular name for the Chicago Board Options Exchange's CBOE 
+Volatility Index. It is based on the expectation of volatility based on S&P 500 index options, it is mainly known as fear index. VIX is mainly used by hedge funds as they hedge their money when the market has a crash or is going down so that they still be in profit and losses are at minimum. VIX should always be on 15 to 20 price range, if it goes higher the markets tend to go down. 
+
+What is DJI?
+Dow Jones : The Dow Jones Industrial Average (DJIA), also known as the Dow 30, is a stock market index that tracks 30 large, publicly-owned blue-chip companies trading on the New York Stock Exchange (NYSE) and Nasdaq. Many indexes and stocks as well as many countries follow the Dow Jones as if Dow Jones goes down they will follow and go down and the opposite too as if the economy is good it will go up. 
+
+As you can see VIX got to high 90's in 2009 and Dow Jones was under 10k, as the market was going through 
+housing markets crash and it is known as one of worst financial crises in the United States. In 2010 there was something known as flash crash where it went to high 50s and DJI went under 10k. Many events occurred 2012,2016,2018 and then there was COVID-19 in 2020 where the VIX got to high 90's and where DJI went to 18k which is also known as one of the worst financial crash in history as the economy was shut down, people were dying due to diseases. But overall DJI has been profitable for long term investors 
+
+
+```{r, warning=FALSE, message=FALSE}
+#9 ^VIX - Volatility Index  = basic example of candle charts
+df_nine_VIX <- data.frame(Date=index(`VIX`),coredata(`VIX`))
+df_nine_VIX <- tail(df_nine_VIX, 3997)
+
+#######################################################################
+
+#2 DJI = Dow 30 basic example of Candle charts
+df_two_DJI <- data.frame(Date=index(DJI),coredata(DJI))
+df_two_DJI <- tail(df_two_DJI, 3997)
+
+#######################################################################
+
+fig9_VIX <- df_nine_VIX %>% plot_ly(x = ~Date, y = ~VIX.High, type="scatter",
+          open = ~VIX.Open, close = ~VIX.Close,
+          high = ~VIX.High, low = ~VIX.Low) 
+fig9_VIX <- fig9_VIX %>% layout(title = "VIX High Scatter Chart")
+
+fig9_VIX
+
+#######################################################################
+
+fig2_DJI <- df_two_DJI %>% plot_ly(x = ~Date, y = ~DJI.High, type="scatter",
+          open = ~DJI.Open, close = ~DJI.Close,
+          high = ~DJI.High, low = ~DJI.Low) 
+fig2_DJI <- fig2_DJI %>% layout(title = "Dow Jones 30 High Price Scatter Chart")
+
+fig2_DJI
+
+#######################################################################
+
+df_nine_VIX %>% 
+  arrange(desc(by=VIX.High)) %>%            # arrange descending so that I may sort (Large to small)
+  head(100) %>%                                 # Use head function to get top 5 
+  select(Date, VIX.High, VIX.Open, VIX.Close,) # Use select(columns) function to display only required name on (columns)
+
+#######################################################################
+
+
+df_two_DJI %>% 
+  arrange(desc(by=DJI.Volume)) %>%            # arrange decending so that I may sort (Large to small)
+  head(100) %>%                                 # Use head function to get top 5 
+  select(Date, DJI.Volume, DJI.Open, DJI.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+
+### Crude Oil vs (DJT) Dow Jones Transportation 
+
+
+Our question here was if there is a correlation between Crude Oil and Dow Jones Transportation Index, which I wanted to explore. 
+
+Crude Oil: is a raw natural resource extracted from the earth and refined into products such as gasoline, jet fuel, and other by-products such as tires, cloth, lipstick, paint, dishes, toothpaste, shampoo, camera, perfumes, shoes, and many more.
+Crude is also called commodity: which means oil, gas, and other soft goods like oranges, apples, grains, corn, and many more, which are traded every day. 
+
+Dow Jones Transportation Avg is an index showing twenty transportation corporations' average stock prices. Within Dow transport, it includes airlines like American Airlines, rental and leasing like Avis, trucking like J.B Hunt, railroads like Union Pacific, and delivery services like UPS. This index often gives an early sign of trouble because transport and delivery companies are the first to find out when there is a slowdown in global trade, as we saw from the Covid health crisis. 
+
+We can see from the graph that the two data are correlated: when the Crude increases, the Dow Jones Transport also increases, and vice versa. We also see a significant decline in several parts of the graph. Furthermore, we see on the chart below that there was a dip in 2009 when the financial crises occurred. In 2018-2019 the China-US trade war, and 2020 there was a dip because of Covid. To counter the dip in 2019 the Fed reserve put the Federal fud rate at 0% to increase the growth which we can see in the chart. Finally, most recently, in 2021-2022 Ukraine and Russian wars affected the markets and with the volatile commodity market/inflation.
+
+
+```{r, warning=FALSE, message=FALSE}
+# #10 CL=F - Crude Oil  = basic example of candle charts
+df_ten_Crude_Oil <- data.frame(Date=index(`CL=F`),coredata(`CL=F`))
+df_ten_Crude_Oil <- tail(df_ten_Crude_Oil, 3997)
+
+#######################################################################
+
+# #13  DJT - Dow Jones Transportation  = basic example of candle charts
+df_thirteen_DJT_Transport <- data.frame(Date=index(`DJT`),coredata(`DJT`))
+df_thirteen_DJT_Transport <- tail(df_thirteen_DJT_Transport, 3997)
+
+
+#######################################################################
+ #df_ten_Crude_Oil <- df_ten_Crude_Oil %>% rename(CL)
+fig10_Crude_Oil <- df_ten_Crude_Oil %>% plot_ly(x = ~Date, y = ~CL.F.High, type="candlestick",
+          open = ~CL.F.Open, close = ~CL.F.Close,
+          high = ~CL.F.High, low = ~CL.F.Low)
+fig10_Crude_Oil <- fig10_Crude_Oil %>% layout(title = "Crude Oil Candlestick Chart")
+
+fig10_Crude_Oil
+
+#######################################################################
+
+
+ #df_thirteen_DJT_Transport <- df_eleven %>% rename(CL)
+fig13_DJT_Transport <- df_thirteen_DJT_Transport %>% plot_ly(x = ~Date, y = ~DJT.High, type="candlestick",
+          open = ~DJT.Open, close = ~DJT.Close,
+          high = ~DJT.High, low = ~DJT.Low)
+fig13_DJT_Transport <- fig13_DJT_Transport %>% layout(title = "Dow Jones Transportation Candlestick Chart")
+
+fig13_DJT_Transport
+
+#######################################################################
+df_ten_Crude_Oil %>%
+  arrange(desc(by=CL.F.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5
+  select(Date, CL.F.Volume, CL.F.Open, CL.F.Close) # Use select(columns) function to display only required name on (columns)
+
+
+#######################################################################
+
+df_thirteen_DJT_Transport %>%
+  arrange(desc(by=DJT.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5
+  select(Date, DJT.Volume, DJT.Open, DJT.Close) # Use select(columns) function to display only required name on (columns)
+```
+
+### US Markets and Global Markets vs Major Events 
+
+
+There are four U.S. markets and two international markets (Japan and U.K.) below. We noticed in finance that the color choice is limited, so we chose colors for a broad audience; in our example, these are useful for a color-blind audience. 
+Now let us see what significant events were taking place. In 2008 there was a Global Financial Crises (Housing), and we can see a dip in all markets. From 2010-2015 the Fed had a 0% Federal Fund Rate which we can see the sudden increase in the market trend. In 2011 there was a unique dip in the Japanese market where we saw a steady drop, and after doing our research, we noticed it was due to the devastating earthquake that occurred in Japan. In the 2016 Crude Crisis, the price went from 155 per barrel to 26, so the market dipped once again. Also, in 2016 Brexit U.K. left the European Union, which created market uncertainty. In 2020 we saw that there was also a dip because of the Global health crisis (Covid). In 2021, the 0% interest rate from the Fed Fund Rate was the reason there was a trend up. The 0% rate is when investors go to growth investment (Google, Tesla, Apple, Bitcoin) rather than value investment (GE, Ford, GM). In 2022, we see a sudden decrease again as the War in Ukraine and Russia, and more importantly, the Federal Rates went from where federal find rates went from 0% to .25% and then to 3.75-4%. When the interest rate increases, the economy slows down, and it is more expensive to do research and development; therefore, the growth investment is also hit hard, like FAANG(Facebook, Amazon, Apple, Netflix, Google). Furthermore, the interest rates hike helps control the inflation rates. 
+
+
+```{r}
+df_one_SP_500 <- data.frame(Date=index(GSPC),coredata(GSPC))
+df_two_DJI <- data.frame(Date=index(DJI),coredata(DJI))
+df_three_Nasdaq <- data.frame(Date=index(IXIC),coredata(IXIC))
+df_four_Russell_2000 <- data.frame(Date=index(RUT),coredata(RUT))
+df_five_FTSE_UK <- data.frame(Date=index(`FTSE`),coredata(`FTSE`))
+df_six_Nikkei <- data.frame(Date=index(`N225`),coredata(`N225`))
+
+
+ggplot() +               
+  geom_line(data = df_one_SP_500, aes(Date,GSPC.Close, 
+             color = "GSPC.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_two_DJI, aes(Date,DJI.Close, 
+             color = "DJI.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_three_Nasdaq, aes(Date,IXIC.Close, 
+             color = "IXIC.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_four_Russell_2000, aes(Date,RUT.Close, 
+             color = "RUT.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_five_FTSE_UK, aes(Date,FTSE.Close, 
+             color = "FTSE.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_six_Nikkei, aes(Date,N225.Close, 
+             color = "N225.Close"),
+             size = 1, shape = 21)+
+  scale_color_manual(name = "Markets Type", 
+                     breaks = c("GSPC.Close", "DJI.Close", "IXIC.Close", "RUT.Close", "FTSE.Close", "N225.Close"),
+                     values = c("GSPC.Close" = "black", "DJI.Close" = "orange", "IXIC.Close" = "sky blue", "RUT.Close" = "yellow", "FTSE.Close" = "#B6DBFF", "N225.Close" = "#DB6D00"))+ 
+  labs(x = "Date", y = "Close Price")+
+  ggtitle("US Markets & Global Markets")
+```
+
+
+### Summary
+
+
+In conclusion, we can assume that significant global and domestic events can influence the market and day-to-day. Furthermore, we can see from the bird's eye that the market changes not only due to financial news but the variety of global events that occur worldwide in our globally connected economy. We can see from the research that information is key to making a valuable decision. Furth more, looking at historical data to help prepare for future risks and taking possible steps to mitigate risks can help you make sound decisions. 
+
+
+### Key Words 
+
+Dow Jones : The Dow Jones Industrial Average (DJIA), also known as the Dow 30, is a stock market index that tracks 30 large, publicly-owned blue-chip companies trading on the New York Stock Exchange (NYSE) and Nasdaq.
+
+Nasdaq: Nasdaq is a global electronic marketplace for buying and selling securities. Its name was originally an acronym for "National Association of Securities Dealers Automated Quotations"—Nasdaq started as a subsidiary of the National Association of Securities Dealers (NASD), now known as the Financial Industry Regulatory Authority (FINRA). Nasdaq was launched after the Securities and Exchange Commission (SEC) urged NASD to automate the market for securities not listed on an exchange. The result was the first electronic trading system.
+
+S&P 500: An S&P 500 Index Fund is an investment composed of stocks that are listed in the Standard & Poor's 500 Index. Its performance will be nearly identical to the performance of the market index.
+
+Russell 2000: The term Russell 2000 Index refers to a stock market index that measures the performance of the 2,000 smaller companies included in the Russell 3000 Index. 
+
+Nikkei(Japan): The Nikkei is short for Japan's Nikkei 225 Stock Average, the leading and most-respected index of Japanese stocks. It is a price-weighted index composed of Japan's top 225 blue-chip companies traded on the Tokyo Stock Exchange
+
+UK Financial Times Stock Exchange: The Financial Times Stock Exchange (FTSE), now known as FTSE Russell Group, is a British financial organization that specializes in providing index offerings for the global financial markets. The London Stock Exchange Group (LSEG) owns the FTSE Russell Group
+
+Bitcoin: Bitcoin (BTC) is a cryptocurrency, a virtual currency designed to act as money and a form of payment outside the control of any one person, group, or entity, thus removing the need for third-party involvement in financial transactions
+
+Vix : VIX is the ticker symbol and the popular name for the Chicago Board Options Exchange's CBOE Volatility Index. expectation of volatility based on S&P 500 index options, it is also known as fear index
+
+10 year bond: The 10-year Treasury note is a debt obligation issued by the United States government with a maturity of 10 years upon initial issuance. A 10-year Treasury note pays interest at a fixed rate once every six months and pays the face value to the holder at maturity.
+
+Crude: Crude oil is a raw natural resource that is extracted from the earth and refined into products such as gasoline, jet fuel, and other petroleum products. Its is a commodity which can be traded in commodity markets.
+
+Dow Jones Transportation Average: The index is a running average of the stock prices of twenty transportation corporations. The Dow Jones Transportation Average (DJTA, also called the "Dow Jones Transports") is a U.S. stock market index from S&P Dow Jones Indices of the transportation sector, and is the most widely recognized gauge of the American transportation sector
+
+
+### References 
+
+*Plotly.com/r/*
+*Yahoo Finance*
+*https://money.usnews.com/investing/stock-market-news/slideshows/decades-biggest-events-on-wall-street*
+*https://realnoevremya.com/articles/5349-top-10-important-events-in-world-markets-of-past-decade*
+
+
+### All dataframes Below 
+
+
+```{r, warning=FALSE, message=FALSE}
+#1 GSPC - S&P 500 = basic example of candle charts
+df_one_SP_500 <- data.frame(Date=index(GSPC),coredata(GSPC))
+#df_one <- tail(df_one, 3997)
+
+#######################################################################
+
+fig1_SP_500 <- df_one_SP_500 %>% plot_ly(x = ~Date, y = ~GSPC.Volume, type="scatter",
+          open = ~GSPC.Open, close = ~GSPC.Close,
+          high = ~GSPC.High, low = ~GSPC.Low) 
+fig1_SP_500 <- fig1_SP_500 %>% layout(title = "Russell Volume Scatter Chart")
+
+fig1_SP_500
+
+#######################################################################
+
+fig1_SP_500 <- df_one_SP_500 %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~GSPC.Open, close = ~GSPC.Close,
+          high = ~GSPC.High, low = ~GSPC.Low) 
+fig1_SP_500 <- fig1_SP_500 %>% layout(title = "Russell Volume Candlestick Chart")
+
+fig1_SP_500
+
+#######################################################################
+
+# We were playing around and found dates where Volume for S&P 500 was most volatile. 
+df_one_SP_500 %>% 
+  arrange(desc(by=GSPC.Volume)) %>%            # arrange descending so that we may sort (Large to small)
+  head(25) %>%                                 # Used head function to get top 25 
+  select(Date, GSPC.Volume, GSPC.Close, GSPC.Open,) # Used select(columns) function to display only required name on (columns)
+
+
+
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+#2 DJI = Dow 30 basic example of Candle charts
+df_two_DJI <- data.frame(Date=index(DJI),coredata(DJI))
+df_two_DJI <- tail(df_two_DJI, 3997)
+
+#######################################################################
+#Volume 
+fig2_DJI <- df_two_DJI %>% plot_ly(x = ~Date, y = ~DJI.Volume, type="scatter",
+          open = ~DJI.Open, close = ~DJI.Close,
+          high = ~DJI.High, low = ~DJI.Low) 
+fig2_DJI <- fig2_DJI %>% layout(title = "Dow Jones 30 Volume Scatter Chart")
+
+fig2_DJI
+
+#High Price 
+fig2_DJI <- df_two_DJI %>% plot_ly(x = ~Date, y = ~DJI.High, type="scatter",
+          open = ~DJI.Open, close = ~DJI.Close,
+          high = ~DJI.High, low = ~DJI.Low) 
+fig2_DJI <- fig2_DJI %>% layout(title = "Dow Jones 30 High Price Scatter Chart")
+
+fig2_DJI
+
+#######################################################################
+
+
+fig2_DJI <- df_two_DJI %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~DJI.Open, close = ~DJI.Close,
+          high = ~DJI.High, low = ~DJI.Low) 
+fig2_DJI <- fig2_DJI %>% layout(title = "Dow 30 High/Low Candlestick Chart")
+
+fig2_DJI
+
+#######################################################################
+
+df_two_DJI %>% 
+  arrange(desc(by=DJI.Volume)) %>%            # arrange decending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, DJI.Volume, DJI.Open, DJI.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#3 ^IXIC - Nasdaq = basic example of candle charts
+df_three_Nasdaq <- data.frame(Date=index(IXIC),coredata(IXIC))
+df_three_Nasdaq <- tail(df_three_Nasdaq, 3997)
+
+#######################################################################
+
+fig3_Nasdaq <- df_three_Nasdaq %>% plot_ly(x = ~Date, y = ~IXIC.Volume, type="scatter",
+          open = ~IXIC.Open, close = ~IXIC.Close,
+          high = ~IXIC.High, low = ~IXIC.Low) 
+fig3_Nasdaq <- fig3_Nasdaq %>% layout(title = "Dow Jones 30 Volume Scatter Chart")
+
+fig3_Nasdaq
+
+#######################################################################
+
+
+fig3_Nasdaq <- df_three_Nasdaq %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~IXIC.Open, close = ~IXIC.Close,
+          high = ~IXIC.High, low = ~IXIC.Low) 
+fig3_Nasdaq <- fig3_Nasdaq %>% layout(title = "Nasdaq Price Candlestick Chart")
+
+fig3_Nasdaq
+
+#######################################################################
+
+df_three_Nasdaq %>% 
+  arrange(desc(by=IXIC.Volume)) %>%            # arrange decending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, IXIC.Volume, IXIC.Open, IXIC.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#4 ^RUT - Russell 2000 = basic example of candle charts
+df_four_Russell_2000 <- data.frame(Date=index(RUT),coredata(RUT))
+df_four_Russell_2000 <- tail(df_four_Russell_2000, 3997)
+
+#######################################################################
+
+fig4_Russell_2000 <- df_four_Russell_2000 %>% plot_ly(x = ~Date, y = ~RUT.Volume, type="scatter",
+          open = ~RUT.Open, close = ~RUT.Close,
+          high = ~RUT.High, low = ~RUT.Low) 
+fig4_Russell_2000 <- fig4_Russell_2000 %>% layout(title = "Russell Volume Scatter Chart")
+
+fig4_Russell_2000
+
+#######################################################################
+
+
+
+fig4_Russell_2000 <- df_four_Russell_2000 %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~RUT.Open, close = ~RUT.Close,
+          high = ~RUT.High, low = ~RUT.Low) 
+fig4_Russell_2000 <- fig4_Russell_2000 %>% layout(title = "Russell 2000 Volume Candlestick Chart")
+
+fig4_Russell_2000
+
+#######################################################################
+
+df_four_Russell_2000 %>% 
+  arrange(desc(by=RUT.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25 ) %>%                                 # Use head function to get top 5 
+  select(Date, RUT.Volume, RUT.Open, RUT.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#5 ^FTSE - Financial Times Stock Exchange UK  = basic example of candle charts
+df_five_FTSE_UK <- data.frame(Date=index(`FTSE`),coredata(`FTSE`))
+df_five_FTSE_UK <- tail(df_five_FTSE_UK, 3997)
+
+#######################################################################
+
+fig5_FTSE_UK <- df_five_FTSE_UK %>% plot_ly(x = ~Date,y = ~FTSE.Volume, type="scatter",
+          open = ~FTSE.Open, close = ~FTSE.Close,
+          high = ~FTSE.High, low = ~FTSE.Low) 
+fig5_FTSE_UK <- fig5_FTSE_UK %>% layout(title = "UK FTSE Volume Scatter Chart")
+
+fig5_FTSE_UK
+
+#######################################################################
+
+
+fig5_FTSE_UK <- df_five_FTSE_UK %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~FTSE.Open, close = ~FTSE.Close,
+          high = ~FTSE.High, low = ~FTSE.Low)
+fig5_FTSE_UK <- fig5_FTSE_UK %>% layout(title = "Financial Timess Stock Exchange UK Volume Candlestick Chart")
+
+fig5_FTSE_UK
+
+df_five_FTSE_UK %>% 
+  arrange(desc(by=FTSE.Volume)) %>%            # arrange decending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, FTSE.Volume, FTSE.Open, FTSE.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#6 ^N225 - Nikkei Japan  = basic example of candle charts
+df_six_Nikkei <- data.frame(Date=index(`N225`),coredata(`N225`))
+df_six_Nikkei <- tail(df_six_Nikkei, 3997)
+
+#######################################################################
+
+fig6_Nikkei <- df_six_Nikkei %>% plot_ly(x = ~Date, y = ~N225.Volume, type="scatter",
+          open = ~N225.Open, close = ~N225.Close,
+          high = ~N225.High, low = ~N225.Low) 
+fig6_Nikkei <- fig6_Nikkei %>% layout(title = "Nikkei Volume Scatter Chart")
+
+fig6_Nikkei
+
+#######################################################################
+
+
+fig6_Nikkei <- df_six_Nikkei %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~N225.Open, close = ~N225.Close,
+          high = ~N225.High, low = ~N225.Low)
+fig6_Nikkei <- fig6_Nikkei %>% layout(title = "Nikkei 225 Volume Stock Exchange  Candlestick Chart")
+
+fig6_Nikkei
+
+df_six_Nikkei %>% 
+  arrange(desc(by=N225.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, N225.Volume, N225.Open, N225.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#7 ^TNX - 10 Year Bond  = basic example of candle charts
+df_seven_10_Yr <- data.frame(Date=index(`TNX`),coredata(`TNX`))
+df_seven_10_Yr <- tail(df_seven_10_Yr, 3997)
+
+#######################################################################
+
+fig7_10_Yr <- df_seven_10_Yr %>% plot_ly(x = ~Date, y = ~TNX.High, type="scatter",
+          open = ~TNX.Open, close = ~TNX.Close,
+          high = ~TNX.High, low = ~TNX.Low) 
+fig7_10_Yr <- fig7_10_Yr %>% layout(title = "10 Year Bond High Scatter Chart")
+
+fig7_10_Yr
+
+
+#######################################################################
+
+fig7_10_Yr <- df_seven_10_Yr %>% plot_ly(x = ~Date, y = ~TNX.Volume, type="scatter",
+          open = ~TNX.Open, close = ~TNX.Close,
+          high = ~TNX.High, low = ~TNX.Low) 
+fig7_10_Yr <- fig7_10_Yr %>% layout(title = "10 Year Bond Volume Scatter Chart")
+
+fig7_10_Yr
+#######################################################################
+
+
+fig7_10_Yr <- df_seven_10_Yr %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~TNX.Open, close = ~TNX.Close,
+          high = ~TNX.High, low = ~TNX.Low)
+fig7_10_Yr <- fig7_10_Yr %>% layout(title = "10 Year Bond High Candlestick Chart")
+
+fig7_10_Yr
+
+df_seven_10_Yr %>% 
+  arrange(desc(by=TNX.High)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, TNX.High, TNX.Open, TNX.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#8 ^BTC-USD - Bitcoin  = basic example of candle charts
+df_eight_Bitcoin <- data.frame(Date=index(`BTC-USD`),coredata(`BTC-USD`))
+df_eight_Bitcoin <- tail(df_eight_Bitcoin, 3997)
+
+#######################################################################
+
+fig8_Bitcoin <- df_eight_Bitcoin %>% plot_ly(x = ~Date, y = ~BTC.USD.Volume, type="scatter",
+          open = ~BTC.USD.Open, close = ~BTC.USD.Close,
+          high = ~BTC.USD.High, low = ~BTC.USD.Low) 
+fig8_Bitcoin <- fig8_Bitcoin %>% layout(title = "Bitcoin Volume Scatter Chart")
+
+fig8_Bitcoin
+
+#######################################################################
+
+
+fig8_Bitcoin <- df_eight_Bitcoin %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~BTC.USD.Open, close = ~BTC.USD.Close,
+          high = ~BTC.USD.High, low = ~BTC.USD.Low)
+fig8_Bitcoin <- fig8_Bitcoin %>% layout(title = "Bitcoin High Candlestick Chart")
+
+fig8_Bitcoin
+
+df_eight_Bitcoin %>% 
+  arrange(desc(by=BTC.USD.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5 
+  select(Date, BTC.USD.Volume, BTC.USD.Open, BTC.USD.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+#9 ^VIX - Volatility Index  = basic example of candle charts
+df_nine_VIX <- data.frame(Date=index(`VIX`),coredata(`VIX`))
+df_nine_VIX <- tail(df_nine_VIX, 3997)
+
+#######################################################################
+
+fig9_VIX <- df_nine_VIX %>% plot_ly(x = ~Date, y = ~VIX.High, type="scatter",
+          open = ~VIX.Open, close = ~VIX.Close,
+          high = ~VIX.High, low = ~VIX.Low) 
+fig9_VIX <- fig9_VIX %>% layout(title = "VIX High Scatter Chart")
+
+fig9_VIX
+
+#######################################################################
+
+
+fig9_VIX <- df_nine_VIX %>% plot_ly(x = ~Date, type="candlestick",
+          open = ~VIX.Open, close = ~VIX.Close,
+          high = ~VIX.High, low = ~VIX.Low)
+fig9_VIX <- fig9_VIX %>% layout(title = "VIX High Candlestick Chart")
+
+fig9_VIX
+
+df_nine_VIX %>% 
+  arrange(desc(by=VIX.High)) %>%            # arrange descending so that I may sort (Large to small)
+  head(100) %>%                                 # Use head function to get top 5 
+  select(Date, VIX.High, VIX.Open, VIX.Close,) # Use select(columns) function to display only required name on (columns)
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+# #10 CL=F - Crude Oil  = basic example of candle charts
+df_ten_Crude_Oil <- data.frame(Date=index(`CL=F`),coredata(`CL=F`))
+df_ten_Crude_Oil <- tail(df_ten_Crude_Oil, 3997)
+
+#######################################################################
+
+fig10_Crude_Oil <- df_ten_Crude_Oil %>% plot_ly(x = ~Date, y = ~CL.F.High, type="scatter",
+          open = ~CL.F.Open, close = ~CL.F.Close,
+          high = ~CL.F.High, low = ~CL.F.Low) 
+fig10_Crude_Oil <- fig10_Crude_Oil %>% layout(title = "Crude High Scatter Chart")
+
+fig10_Crude_Oil
+
+#######################################################################
+
+
+ #df_ten_Crude_Oil <- df_ten_Crude_Oil %>% rename(CL)
+fig10_Crude_Oil <- df_ten_Crude_Oil %>% plot_ly(x = ~Date, y = ~CL.F.High, type="candlestick",
+          open = ~CL.F.Open, close = ~CL.F.Close,
+          high = ~CL.F.High, low = ~CL.F.Low)
+fig10_Crude_Oil <- fig10_Crude_Oil %>% layout(title = "Crude Oil Candlestick Chart")
+
+fig10_Crude_Oil
+
+#######################################################################
+
+df_ten_Crude_Oil %>%
+  arrange(desc(by=CL.F.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5
+  select(Date, CL.F.Volume, CL.F.Open, CL.F.Close) # Use select(columns) function to display only required name on (columns)
+
+##############################(GGPLOT)#########################################
+
+# ggplot(df_ten_Crude_Oil, aes(Date,CL.F.High, ))+
+#   geom_point(3)+
+#   geom_line()
+
+#
+
+df_ten_Crude_Oil %>% 
+  ggplot(aes(Date, CL.F.Volume,))+
+  geom_point(size = 3, alpha = 0.5)+
+  geom_smooth()
+labs(tittle = "ggplot trial")+
+  theme_bw()
+
+#
+df_ten_Crude_Oil %>% 
+  ggplot(aes(Date, CL.F.Volume, Price))+
+  geom_point(size = 3, alpha = 0.5)+
+  geom_smooth()
+#
+df_ten_Crude_Oil %>% 
+  filter(Date >= 2010-01-01) %>%  
+  ggplot(aes(Date, CL.F.Close))+ 
+  geom_point(aes(color = CL.F.Volume, 
+             ))+   #size = CL.F.Volume
+  geom_smooth()+
+  labs(x = "Crude Date",
+       y = "Crude Price",
+       title = "Crude Volume vs Price")+
+  theme_minimal()
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+# #11 GC=F - Gold  = basic example of candle charts
+df_eleven_Gold <- data.frame(Date=index(`GC=F`),coredata(`GC=F`))
+df_eleven_Gold <- tail(df_eleven_Gold, 3997)
+
+#######################################################################
+
+fig11_Gold <- df_eleven_Gold %>% plot_ly(x = ~Date, y = ~GC.F.High, type="scatter",
+          open = ~GC.F.Open, close = ~GC.F.Close,
+          high = ~GC.F.High, low = ~GC.F.Low) 
+fig11_Gold <- fig11_Gold %>% layout(title = "Gold High Scatter Chart")
+
+fig11_Gold
+
+#######################################################################
+
+
+ #df_eleven_Gold <- df_eleven %>% rename(CL)
+fig11_Gold <- df_eleven_Gold %>% plot_ly(x = ~Date, y = ~GC.F.High, type="candlestick",
+          open = ~GC.F.Open, close = ~GC.F.Close,
+          high = ~GC.F.High, low = ~GC.F.Low)
+fig11_Gold <- fig11_Gold %>% layout(title = "Gold Oil Candlestick Chart")
+
+fig11_Gold
+
+#######################################################################
+
+df_eleven_Gold %>%
+  arrange(desc(by=GC.F.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5
+  select(Date, GC.F.Volume, GC.F.Open, GC.F.Close) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+# #12  SI=F - Silver  = basic example of candle charts
+df_twelve_Silver <- data.frame(Date=index(`SI=F`),coredata(`SI=F`))
+df_twelve_Silver <- tail(df_twelve_Silver, 3997)
+
+#######################################################################
+
+fig12_Silver <- df_twelve_Silver %>% plot_ly(x = ~Date, y = ~SI.F.High, type="scatter",
+          open = ~SI.F.Open, close = ~SI.F.Close,
+          high = ~SI.F.High, low = ~SI.F.Low) 
+fig12_Silver <- fig12_Silver %>% layout(title = "Silver High Scatter Chart")
+
+fig12_Silver
+
+#######################################################################
+
+
+ #df_eleven_Silver <- df_twelve %>% rename(CL)
+fig12_Silver <- df_twelve_Silver %>% plot_ly(x = ~Date, y = ~SI.F.High, type="candlestick",
+          open = ~SI.F.Open, close = ~SI.F.Close,
+          high = ~SI.F.High, low = ~SI.F.Low)
+fig12_Silver <- fig12_Silver %>% layout(title = "Silver Candlestick Chart")
+
+fig12_Silver
+
+#######################################################################
+
+df_twelve_Silver %>%
+  arrange(desc(by=SI.F.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5
+  select(Date, SI.F.Volume, SI.F.Open, SI.F.Close) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+# #13  DJT - Dow Jones Transportation  = basic example of candle charts
+df_thirteen_DJT_Transport <- data.frame(Date=index(`DJT`),coredata(`DJT`))
+df_thirteen_DJT_Transport <- tail(df_thirteen_DJT_Transport, 3997)
+
+#######################################################################
+
+fig13_DJT_Transport <- df_thirteen_DJT_Transport %>% plot_ly(x = ~Date, y = ~DJT.High, type="scatter",
+          open = ~DJT.Open, close = ~DJT.Close,
+          high = ~DJT.High, low = ~DJT.Low) 
+fig13_DJT_Transport <- fig13_DJT_Transport %>% layout(title = "DJT Dow Jones Transportation High Scatter Chart")
+
+fig13_DJT_Transport
+
+#######################################################################
+
+
+ #df_eleven_Gold <- df_eleven %>% rename(CL)
+fig13_DJT_Transport <- df_thirteen_DJT_Transport %>% plot_ly(x = ~Date, y = ~DJT.High, type="candlestick",
+          open = ~DJT.Open, close = ~DJT.Close,
+          high = ~DJT.High, low = ~DJT.Low)
+fig13_DJT_Transport <- fig13_DJT_Transport %>% layout(title = "Dow Jones Transportation Candlestick Chart")
+
+fig13_DJT_Transport
+
+#######################################################################
+
+df_thirteen_DJT_Transport %>%
+  arrange(desc(by=DJT.Volume)) %>%            # arrange descending so that I may sort (Large to small)
+  head(25) %>%                                 # Use head function to get top 5
+  select(Date, DJT.Volume, DJT.Open, DJT.Close) # Use select(columns) function to display only required name on (columns)
+```
+
+```{r, warning=FALSE, message=FALSE}
+#  Us_Market <- melt(list(df1 = df_one_SP_500, df2 = df_two_DJI, df3 = df_three_Nasdaq), id.vars = "Date")
+# 
+# #Specify your colour vector
+# cols <- c("red", "blue", "green")
+# 
+# #Plot data and specify the manual scale
+# ggplot(Us_Market, aes(Date(), colour = L1)) + 
+#   geom_line() +
+#   scale_colour_manual(values = cols)
+
+# ggplot()+ geom_line(data= All_PMHCA, aes(x=Pos_0, y=Hg, colour= "Hg") )+ geom_point(data= PMHCA_count,aes(x=Year, y= dot, colour= "Year"))
+
+ggplot() +               
+  geom_line(data = df_one_SP_500, aes(Date,GSPC.Close, 
+             color = "GSPC.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_two_DJI, aes(Date,DJI.Close, 
+             color = "DJI.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_three_Nasdaq, aes(Date,IXIC.Close, 
+             color = "IXIC.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_four_Russell_2000, aes(Date,RUT.Close, 
+             color = "RUT.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_five_FTSE_UK, aes(Date,FTSE.Close, 
+             color = "FTSE.Close"),
+             size = 1, shape = 21)+
+  geom_line(data = df_six_Nikkei, aes(Date,N225.Close, 
+             color = "N225.Close"),
+             size = 1, shape = 21)+
+  scale_color_manual(name = "Markets Type", 
+                     breaks = c("GSPC.Close", "DJI.Close", "IXIC.Close", "RUT.Close", "FTSE.Close", "N225.Close"),
+                     values = c("GSPC.Close" = "black", "DJI.Close" = "orange", "IXIC.Close" = "sky blue", "RUT.Close" = "yellow", "FTSE.Close" = "#B6DBFF", "N225.Close" = "#DB6D00"))+ 
+  labs(x = "Date", y = "Close Price")+
+  ggtitle("US Markets & Global Markets")
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+ggplot() +
+  geom_boxplot(data = df_one_SP_500, aes(GSPC.Close,Date),
+             fill = "dark green", color = "black",
+             size = 5, shape = 21)+
+  labs(x = "Close Price", y = "Date")+
+  ggtitle("US Market Plot")
+
+###########################################################################
+ggplot() +
+  geom_line(data = df_one_SP_500, aes(Date,GSPC.Close),
+             fill = "dark green", color = "black",
+             size = 5, shape = 21)+
+  labs(x = "Date", y = "Close Price")+
+  ggtitle("US Market Plot")
+
+###########################################################################
+ggplot() +
+  geom_col(data = df_one_SP_500, aes(Date,GSPC.Close, alpha = 0.3),
+             fill = "dark green", color = "green",
+             size = 1, shape = 21)+
+  geom_col(data = df_two_DJI, aes(Date,DJI.Close, alpha = 0.3), 
+             color = "yellow",
+             color = "yellow",
+             size = 1, shape = 21)+
+  labs(x = "Date", y = "Close Price")+
+  ggtitle("US Market Plot")
+
+
+# df_ten_Crude_Oil %>% 
+#   filter(Date >= 2010-01-01) %>%  
+#   ggplot(aes(Date, CL.F.Close))+ 
+#   geom_point(aes(color = CL.F.Volume, 
+#              ))+   #size = CL.F.Volume
+#   geom_smooth()+
+#   labs(x = "Crude Date",
+#        y = "Crude Price",
+#        title = "Crude Volume vs Price")+
+#   theme_minimal()
+```
+
+
+
+
