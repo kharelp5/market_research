@@ -1,7 +1,7 @@
 ---
 title: "Financial Markets Data Exploration"
-author: Pukar Kharel, Damon Ross & Ali Mandi Rupani 
-date: 12/10/2022
+author: Pukar Kharel 
+date: 2024
 output: 
   html_document:
     df_print: paged
